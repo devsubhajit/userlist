@@ -10,7 +10,8 @@ const Form = (props) => {
     const [form, setForm] = useState({});
     const [isSubmit, set_isSubmit] = useState(false);
     const dispatch = useDispatch();
-    const formElem = useRef()
+    const formElem = useRef();
+    const [loader, setLoader] = useState(false);
 
     const handleForm = (e, reg = null) => {
         let name = e.target.name;
@@ -33,21 +34,25 @@ const Form = (props) => {
     }
 
     const fileUpload = (e) => {
+        setLoader(true)
         const fileData = new FormData();
         fileData.append('file', e.target.files[0]);
         fileData.append("upload_preset", "voruywvc");
         api.imageUpload(fileData).then(res => {
+            setLoader(false)
             if (res.status === 200) {
                 setForm({ ...form, image: { value: res.data.secure_url, error: false } });
                 e.target.value = "";
             }
         }).catch(err => {
+            setLoader(false)
             console.log(err)
         })
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoader(true)
         let errorCount = 0;
         const formData = {};
         for (const key in form) {
@@ -70,8 +75,11 @@ const Form = (props) => {
                 set_isSubmit(false);
                 setForm({});
             }
+            
         } catch (err) {
             console.log(err)
+        } finally{
+            setLoader(false)
         }
     }
     return (
@@ -131,9 +139,9 @@ const Form = (props) => {
                         <label htmlFor="filefor" className="form-label">Image</label>
 
                         {form?.image?.value ? (
-                            <div style={{position:'relative'}}>
-                                <img src={form?.image?.value} style={{width:"100%", height:"auto"}}/>
-                                <button type="button" style={{position:'absolute', top:0, right:0, left:"auto"}} className="btn btn-dark" onClick={() => setForm({ ...form, image: { ...form.image, value: "" } })}>X</button>
+                            <div style={{ position: 'relative' }}>
+                                <img src={form?.image?.value} style={{ width: "100%", height: "auto" }} />
+                                <button type="button" style={{ position: 'absolute', top: 0, right: 0, left: "auto" }} className="btn btn-dark" onClick={() => setForm({ ...form, image: { ...form.image, value: "" } })}>X</button>
                             </div>
                         ) : (
                             <input
@@ -149,21 +157,16 @@ const Form = (props) => {
                     </div>
 
                 </div>
-                {/* <div className="mb-3">
-                    <label htmlFor="nameFor" className="form-label">Name</label>
-                    <input
-                        type="nameFor"
-                        className="form-control"
-                        id="nameFor"
-                        placeholder="Enter your Name"
-                        onChange={(event) => handleForm(event)}
-                    />
-                </div> */}
 
             </div>
             <div className="row mb-5">
                 <div className="col-md-12">
-                    <button type="submit" className=" float-end btn btn-primary">Submit</button>
+                    {!loader ?
+                        <button type="submit" className=" float-end btn btn-primary">Submit</button> :
+                        <div className="spinner-border float-end" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    }
                 </div>
             </div>
         </form>

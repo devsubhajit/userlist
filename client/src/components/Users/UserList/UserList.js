@@ -8,8 +8,10 @@ const UserList = (props) => {
     let [userId, setUserId] = useState("");
     const state = useSelector(state => state.users);
     const dispatch = useDispatch();
+    const [loader, setLoader] = useState(false);
     useEffect(() => {
         async function fetchData() {
+            setLoader(true);
             try {
                 const res = await api.getUsers({ limit: 10, skip: 0 });
                 if (res.data.resCode === 200) {
@@ -17,12 +19,15 @@ const UserList = (props) => {
                 }
             } catch (err) {
                 console.log(err)
+            }finally{
+                setLoader(false);
             }
         }
         fetchData();
     }, []);
 
     const editUser = async (user) => {
+        setLoader(true);
         const reqObj = {
             arguments: {
                 name: user.name,
@@ -39,10 +44,13 @@ const UserList = (props) => {
 
         } catch (err) {
             console.log(err)
+        }finally{
+            setLoader(false)
         }
     }
 
     const removeUser = async (user) => {
+        setLoader(true);
         try {
             const res = await api.deleteUser(user._id);
             if (res.data.resCode === 200) {
@@ -50,10 +58,13 @@ const UserList = (props) => {
             }
         } catch (err) {
             console.log(err);
+        }finally{
+            setLoader(false);
         }
     }
 
     const fileUpload = async (e, user) => {
+        setLoader(true)
         const fileData = new FormData();
         fileData.append('file', e.target.files[0]);
         fileData.append("upload_preset", "voruywvc");
@@ -65,16 +76,18 @@ const UserList = (props) => {
                 },
                 id: user._id
             }
-            state.users[state.users.findIndex((elem)=> elem._id === user._id)].image = imgres.data?.secure_url;
+            state.users[state.users.findIndex((elem) => elem._id === user._id)].image = imgres.data?.secure_url;
             const res = await api.updateUser(reqObj);
 
         } catch (err) {
             console.log(err)
+        }finally{
+            setLoader(false)
         }
     }
     return (
         <div className="row">
-            <div className="col-md-12">
+            <div className="col-md-12 position-relative">
                 <table className="table table-bordered">
                     <thead>
                         <tr>
@@ -123,6 +136,13 @@ const UserList = (props) => {
 
                     </tbody>
                 </table>
+                {loader &&
+                    <div className="position-absolute top-0 start-0 w-100 h-100" style={{ backgroundColor: 'rgba(255,255,255, 0.3)' }}>
+                        <div className="spinner-border position-absolute top-50 start-50" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     )
